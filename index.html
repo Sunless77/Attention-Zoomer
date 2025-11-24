@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attention Zoomer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Import Inter (Base) and Outfit (Display/Modern) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg-body: #F3F4F6;
+        --text-primary: #111827;
+        --accent-dark: #1F2937;
+      }
+      body {
+        font-family: 'Outfit', sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-primary);
+        position: relative;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        min-height: 100vh;
+      }
+      
+      .font-display {
+        font-family: 'Outfit', sans-serif;
+      }
+      
+      /* Custom Dot Pattern Background */
+      .bg-dot-pattern {
+        background-color: #F3F4F6;
+        background-image: radial-gradient(#D1D5DB 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+
+      /* Vignette Overlay to focus attention */
+      .vignette-overlay {
+        background: radial-gradient(circle at center, transparent 0%, rgba(243, 244, 246, 0.8) 70%, #F3F4F6 100%);
+      }
+      
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #D1D5DB;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--accent-dark);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-dot-pattern">
+    <div id="root" class="min-h-screen relative"></div>
+  </body>
+</html>

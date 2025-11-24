@@ -1,0 +1,5 @@
+{
+  "name": "Attention Zoomer",
+  "description": "A time-controlled reading experience that adapts article depth to your available time.",
+  "requestFramePermissions": []
+}
