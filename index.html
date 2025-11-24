@@ -5,6 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Attention Zoomer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ['Outfit', 'sans-serif'],
+            },
+            animation: {
+              'bounce-slow': 'bounce-slow 3s infinite ease-in-out',
+              'border-spin': 'border-spin 4s linear infinite',
+            },
+            keyframes: {
+              'bounce-slow': {
+                '0%, 100%': { transform: 'translateY(-5%)' },
+                '50%': { transform: 'translateY(5%)' },
+              },
+              'border-spin': {
+                '0%': { backgroundPosition: '0% 50%' },
+                '100%': { backgroundPosition: '200% 50%' },
+              }
+            }
+          }
+        }
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Import Inter (Base) and Outfit (Display/Modern) -->
@@ -15,6 +41,13 @@
         --text-primary: #111827;
         --accent-dark: #1F2937;
       }
+      
+      .dark {
+        --bg-body: #020617; /* Slate 950 */
+        --text-primary: #F8FAFC; /* Slate 50 */
+        --accent-dark: #E2E8F0; /* Slate 200 */
+      }
+
       body {
         font-family: 'Outfit', sans-serif;
         background-color: var(--bg-body);
@@ -23,6 +56,7 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         min-height: 100vh;
+        transition: background-color 0.3s ease, color 0.3s ease;
       }
       
       .font-display {
@@ -31,14 +65,24 @@
       
       /* Custom Dot Pattern Background */
       .bg-dot-pattern {
-        background-color: #F3F4F6;
+        background-color: var(--bg-body);
         background-image: radial-gradient(#D1D5DB 1px, transparent 1px);
         background-size: 24px 24px;
+        transition: background-image 0.3s ease;
+      }
+      
+      .dark .bg-dot-pattern {
+        background-image: radial-gradient(#1e293b 1px, transparent 1px);
       }
 
       /* Vignette Overlay to focus attention */
       .vignette-overlay {
         background: radial-gradient(circle at center, transparent 0%, rgba(243, 244, 246, 0.8) 70%, #F3F4F6 100%);
+        transition: background 0.3s ease;
+      }
+
+      .dark .vignette-overlay {
+        background: radial-gradient(circle at center, transparent 0%, rgba(2, 6, 23, 0.5) 60%, #020617 100%);
       }
       
       ::-webkit-scrollbar {
@@ -50,6 +94,9 @@
       ::-webkit-scrollbar-thumb {
         background: #D1D5DB;
         border-radius: 3px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #475569;
       }
       ::-webkit-scrollbar-thumb:hover {
         background: var(--accent-dark);

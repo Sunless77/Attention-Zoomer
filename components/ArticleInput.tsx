@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ArrowUp, Link2, Loader2, Clock } from 'lucide-react';
 import { ContentStyle } from '../types';
@@ -44,25 +43,23 @@ export const ArticleInput: React.FC<ArticleInputProps> = ({
     <div className={`w-full relative group isolation-auto`}>
       
       {/* Ethereal Glow Border - Visible when content exists */}
-      {/* Updated to "Spirit Haze" palette: Slate / Pale Lavender / Foggy Zinc */}
       <div 
-        className={`absolute -inset-[3px] rounded-[2.2rem] bg-gradient-to-r from-slate-300 via-indigo-200 via-zinc-200 to-slate-300 bg-[length:200%_100%] transition-opacity duration-700 -z-10 blur-[2px] ${hasContent ? 'opacity-100 animate-border-spin' : 'opacity-0'}`}
+        className={`absolute -inset-[3px] rounded-[2.2rem] bg-gradient-to-r from-slate-300 via-indigo-200 via-zinc-200 to-slate-300 dark:from-slate-700 dark:via-indigo-900 dark:via-slate-700 dark:to-slate-700 bg-[length:200%_100%] transition-opacity duration-700 -z-10 blur-[2px] ${hasContent ? 'opacity-100 animate-border-spin' : 'opacity-0'}`}
       />
 
       {/* Main Card Container */}
-      {/* Removed overflow-hidden to allow StyleSelector dropdown to display */}
-      <div className={`w-full relative bg-white rounded-[2rem] shadow-sm transition-all duration-300 group-focus-within:shadow-md border border-transparent z-10 flex ${compact ? 'flex-row items-center py-2 pr-2 pl-4' : 'flex-col pb-3'}`}>
+      <div className={`w-full relative bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm transition-all duration-300 group-focus-within:shadow-md dark:group-focus-within:shadow-slate-800/50 border border-transparent dark:border-slate-700 z-10 flex ${compact ? 'flex-row items-center py-2 pr-2 pl-4' : 'flex-col pb-3'}`}>
         
         {/* Top Section: Icon + Textarea */}
         <div className={`relative flex ${compact ? 'items-center flex-grow' : 'w-full p-5 pb-0 items-start'}`}>
             {/* Icon */}
-            <div className={`flex-shrink-0 transition-colors duration-500 ${hasContent ? 'text-indigo-300' : 'text-gray-400'} ${compact ? 'mr-3' : 'mt-1 mr-3'}`}>
+            <div className={`flex-shrink-0 transition-colors duration-500 ${hasContent ? 'text-indigo-300 dark:text-indigo-400' : 'text-gray-400 dark:text-slate-600'} ${compact ? 'mr-3' : 'mt-1 mr-3'}`}>
                 <Link2 className="w-5 h-5" />
             </div>
 
             {/* Text Input */}
             <textarea
-                className={`w-full bg-transparent border-none text-gray-900 placeholder:text-gray-400 focus:ring-0 focus:outline-none resize-none font-medium leading-relaxed font-display ${compact ? 'h-6 py-0 text-base' : 'h-32 text-lg'}`}
+                className={`w-full bg-transparent border-none text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-600 focus:ring-0 focus:outline-none resize-none font-medium leading-relaxed font-display ${compact ? 'h-6 py-0 text-base' : 'h-32 text-lg'}`}
                 placeholder={placeholder}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
@@ -88,8 +85,8 @@ export const ArticleInput: React.FC<ArticleInputProps> = ({
                     rounded-full flex items-center justify-center transition-all duration-200 relative z-10
                     ${compact ? 'w-10 h-10' : 'w-10 h-10'}
                     ${!value.trim() 
-                        ? 'bg-gray-100 text-gray-300 cursor-not-allowed' 
-                        : 'bg-[#1F2937] text-white hover:bg-black hover:scale-105 active:scale-95 shadow-md shadow-gray-200'}
+                        ? 'bg-gray-100 dark:bg-slate-800 text-gray-300 dark:text-slate-600 cursor-not-allowed' 
+                        : 'bg-[#1F2937] dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-black dark:hover:bg-white hover:scale-105 active:scale-95 shadow-md shadow-gray-200 dark:shadow-none'}
                 `}
                 aria-label={mode === 'tune' ? "Adjust time settings" : "Generate summary"}
             >

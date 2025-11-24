@@ -1,5 +1,4 @@
-
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useId } from 'react';
 import { formatTime } from '../types';
 import { MousePointer2 } from 'lucide-react';
 
@@ -41,6 +40,7 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const lastValueRef = useRef<number>(seconds);
+  const gradientId = useId(); // Unique ID for SVG gradient
   
   // Configuration
   const MIN_ANGLE = -135;
@@ -151,18 +151,27 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (disabled) return;
+    // IMPORTANT: Prevent default to stop scrolling the page while interacting with the knob
+    e.preventDefault();
     handleStart();
     handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
   };
 
   useEffect(() => {
     const handleMove = (e: MouseEvent) => { if (isDragging) handleInteraction(e.clientX, e.clientY); };
-    const handleTouchMove = (e: TouchEvent) => { if (isDragging) handleInteraction(e.touches[0].clientX, e.touches[0].clientY); };
+    const handleTouchMove = (e: TouchEvent) => { 
+        if (isDragging) {
+            // Prevent scrolling during drag
+            if (e.cancelable) e.preventDefault();
+            handleInteraction(e.touches[0].clientX, e.touches[0].clientY); 
+        }
+    };
     const handleUp = () => setIsDragging(false);
 
     if (isDragging) {
       window.addEventListener('mousemove', handleMove);
       window.addEventListener('mouseup', handleUp);
+      // Use passive: false to allow calling preventDefault()
       window.addEventListener('touchmove', handleTouchMove, { passive: false });
       window.addEventListener('touchend', handleUp);
     }
@@ -189,6 +198,9 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
   const SVG_SIZE = 280;
   const CENTER = SVG_SIZE / 2;
   const RADIUS = 112; // Radius for the progress bar (outside the knob)
+  
+  // Safe ID for gradient
+  const safeGradientId = gradientId ? gradientId.replace(/:/g, '') + '-flow' : 'flow-gradient';
 
   return (
     <div className="relative flex flex-col items-center select-none scale-[0.95] transform-gpu">
@@ -198,12 +210,12 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
         className={`absolute -top-16 z-40 transition-all duration-700 ease-in-out pointer-events-none ${isDemo ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
       >
         <div className="animate-bounce-slow relative flex flex-col items-center">
-            <div className="bg-white/90 backdrop-blur-sm border border-gray-200 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
-                <MousePointer2 className="w-4 h-4 text-[#1F2937] fill-[#1F2937]" />
-                <span className="text-xs font-bold uppercase tracking-widest text-[#1F2937]">Choose your attention rate</span>
+            <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-gray-200 dark:border-slate-600 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                <MousePointer2 className="w-4 h-4 text-[#1F2937] dark:text-slate-200 fill-[#1F2937] dark:fill-slate-200" />
+                <span className="text-xs font-bold uppercase tracking-widest text-[#1F2937] dark:text-slate-200">Choose your attention rate</span>
             </div>
             {/* Triangle pointer */}
-            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-white/90 -mt-[1px] drop-shadow-sm"></div>
+            <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-white/90 dark:border-t-slate-800/90 -mt-[1px] drop-shadow-sm"></div>
         </div>
       </div>
 
@@ -214,20 +226,16 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
         <div className="absolute inset-[-8px] z-0 pointer-events-none flex items-center justify-center opacity-100">
             <svg width={SVG_SIZE} height={SVG_SIZE} className="overflow-visible">
                 <defs>
-                    <linearGradient id="flow-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <linearGradient id={safeGradientId} x1="0%" y1="0%" x2="100%" y2="0%">
                         {/* 
                            Gradient Palette: "Spiritual Haze"
-                           High-end, grey-infused gradient. 
-                           Evokes a "mental landscape" or "morning fog" feel.
-                           Very subtle color shifts between cool slates and warm greys.
                         */}
-                        <stop offset="0%" stopColor="#94a3b8" />    {/* Slate 400 - Grounded */}
-                        <stop offset="40%" stopColor="#e2e8f0" />    {/* Slate 200 - Mist */}
-                        <stop offset="60%" stopColor="#d8b4fe" />    {/* Pale Lavender - Spiritual Touch (Very subtle) */}
-                        <stop offset="80%" stopColor="#cbd5e1" />    {/* Slate 300 - Cloud */}
+                        <stop offset="0%" stopColor="#94a3b8" />    {/* Slate 400 */}
+                        <stop offset="40%" stopColor="#e2e8f0" />    {/* Slate 200 */}
+                        <stop offset="60%" stopColor="#d8b4fe" />    {/* Pale Lavender */}
+                        <stop offset="80%" stopColor="#cbd5e1" />    {/* Slate 300 */}
                         <stop offset="100%" stopColor="#94a3b8" />   {/* Loop back */}
                         
-                        {/* Slow, floating rotation */}
                         <animateTransform 
                             attributeName="gradientTransform" 
                             type="rotate" 
@@ -238,11 +246,11 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
                         />
                     </linearGradient>
                 </defs>
-                {/* Background Track (Subtle Gray) */}
+                {/* Background Track (Subtle Gray/Dark Gray) */}
                 <path 
                     d={describeArc(CENTER, CENTER, RADIUS, MIN_ANGLE, MAX_ANGLE)} 
                     fill="none" 
-                    stroke="#E5E7EB" 
+                    className="stroke-gray-200 dark:stroke-slate-700 transition-colors duration-300"
                     strokeWidth="4" 
                     strokeLinecap="round" 
                 />
@@ -250,7 +258,7 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
                 <path 
                     d={describeArc(CENTER, CENTER, RADIUS, MIN_ANGLE, currentAngle)} 
                     fill="none" 
-                    stroke="url(#flow-gradient)" 
+                    stroke={`url(#${safeGradientId})`} 
                     strokeWidth="6" 
                     strokeLinecap="round" 
                     className="" 
@@ -273,7 +281,7 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
                  {/* Outer Tick */}
                  <div 
                    className={`absolute top-1 left-0 w-full rounded-full transition-all duration-300
-                      ${tick.isMajor ? 'h-2 bg-gray-300' : 'h-1 bg-gray-200'}
+                      ${tick.isMajor ? 'h-2 bg-gray-300 dark:bg-slate-600' : 'h-1 bg-gray-200 dark:bg-slate-700'}
                       ${isActive ? 'opacity-0' : 'opacity-100'} 
                    `} 
                  />
@@ -283,43 +291,44 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
         </div>
 
         {/* The Interactive Ring Track (Invisible hit area) */}
+        {/* Added touch-action-none to allow JS to handle touch without browser scrolling */}
         <div 
             ref={knobRef}
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
-            className="absolute inset-2 rounded-full cursor-grab active:cursor-grabbing z-20 group"
+            className="absolute inset-2 rounded-full cursor-grab active:cursor-grabbing z-20 group touch-none"
             style={{ transform: `rotate(${currentAngle}deg)` }}
         >
              {/* The Indicator - Notch on the knob */}
-             <div className="absolute top-[8px] left-1/2 -translate-x-1/2 w-1.5 h-3.5 rounded-full bg-slate-400/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)] z-30"></div>
+             <div className="absolute top-[8px] left-1/2 -translate-x-1/2 w-1.5 h-3.5 rounded-full bg-slate-400/80 dark:bg-slate-200/80 shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)] z-30"></div>
         </div>
 
         {/* Static Center Hub - Physical styled button look */}
         {/* 
-           MATERIAL UPDATE: Matte Ceramic
-           - Clean, pure white with very subtle frosted texture
-           - Removed colored speckles for a cleaner "Zen" look
+           MATERIAL UPDATE: Matte Ceramic in Light, Brushed Slate in Dark
         */}
         <div className="absolute w-48 h-48 rounded-full z-10 pointer-events-none flex flex-col items-center justify-center
-            bg-white
+            bg-white dark:bg-slate-800
             shadow-[0_24px_48px_-12px_rgba(15,23,42,0.15),0_0_0_1px_rgba(15,23,42,0.05),inset_0_1px_1px_rgba(255,255,255,1),inset_0_-2px_4px_rgba(0,0,0,0.05)]
+            dark:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.05),inset_0_1px_1px_rgba(255,255,255,0.1),inset_0_-2px_4px_rgba(0,0,0,0.2)]
             overflow-hidden
+            transition-colors duration-300
         "
         style={{
-             // Subtle "Paper/Stone" grain instead of speckles
+             // Subtle "Paper/Stone" grain
              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E")`
         }}
         >
             
-            {/* Inner Rim Highlight to help separation */}
-            <div className="absolute inset-2 rounded-full border border-white/60 shadow-[inset_0_4px_8px_rgba(255,255,255,0.5)]"></div>
+            {/* Inner Rim Highlight */}
+            <div className="absolute inset-2 rounded-full border border-white/60 dark:border-slate-600/50 shadow-[inset_0_4px_8px_rgba(255,255,255,0.5)] dark:shadow-none"></div>
 
             {/* Time Display */}
-            <div className={`relative z-10 font-display font-black text-[#1F2937] leading-none tracking-tighter transition-all duration-200 text-center flex flex-col items-center justify-center ${isStacked ? 'mt-[-4px]' : ''}`}>
+            <div className={`relative z-10 font-display font-black text-[#1F2937] dark:text-white leading-none tracking-tighter transition-all duration-200 text-center flex flex-col items-center justify-center ${isStacked ? 'mt-[-4px]' : ''}`}>
                 {isStacked ? (
                     <>
                         <span className="text-5xl drop-shadow-sm">{timeMain}</span>
-                        <span className="text-3xl text-slate-400 font-bold">{timeSub}</span>
+                        <span className="text-3xl text-slate-400 dark:text-slate-500 font-bold">{timeSub}</span>
                     </>
                 ) : (
                     <span className={`${seconds > 3600 ? 'text-4xl' : 'text-5xl drop-shadow-sm'}`}>{timeString}</span>
@@ -327,7 +336,7 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
             </div>
             
             {/* Sublabel */}
-            <div className="relative z-10 text-[9px] font-bold text-slate-400 mt-2 uppercase tracking-[0.25em] pt-2 px-4 border-t border-slate-200 w-24 text-center">
+            <div className="relative z-10 text-[9px] font-bold text-slate-400 dark:text-slate-500 mt-2 uppercase tracking-[0.25em] pt-2 px-4 border-t border-slate-200 dark:border-slate-700 w-24 text-center transition-colors">
                 Reading time
             </div>
         </div>
@@ -335,20 +344,10 @@ export const TimeSelector: React.FC<TimeSelectorProps> = ({
       </div>
 
       {/* Helper Labels */}
-      <div className="w-full max-w-[280px] flex justify-between text-[10px] font-bold text-gray-400/80 uppercase tracking-widest mt-4 px-6">
+      <div className="w-full max-w-[280px] flex justify-between text-[10px] font-bold text-gray-400/80 dark:text-slate-600 uppercase tracking-widest mt-4 px-6 transition-colors">
         <span>Micro</span>
         <span>Deep</span>
       </div>
-      
-      <style>{`
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(-5%); }
-          50% { transform: translateY(5%); }
-        }
-        .animate-bounce-slow {
-          animation: bounce-slow 3s infinite ease-in-out;
-        }
-      `}</style>
     </div>
   );
 };

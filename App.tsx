@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { generateReadingContent, generateCoverImage } from './services/geminiService';
 import { TimeSelector } from './components/TimeSelector';
@@ -7,7 +6,7 @@ import { ReaderView } from './components/ReaderView';
 import { StyleSelector } from './components/StyleSelector';
 import { getTimeContext } from './constants';
 import { ContentStyle } from './types';
-import { X, Share, Check } from 'lucide-react';
+import { X, Share, Check, Sun, Moon } from 'lucide-react';
 
 function App() {
   const [inputText, setInputText] = useState('');
@@ -30,6 +29,27 @@ function App() {
   // Demo state with Ref for immediate animation cancellation in the loop
   const [isDemo, setIsDemo] = useState(true);
   const isDemoRef = useRef(true);
+
+  // Theme State
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  });
+
+  // Apply Theme
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   // Intro Animation Logic
   useEffect(() => {
@@ -135,11 +155,6 @@ function App() {
         style: style
       });
 
-      // Fire and forget image gen, or await it? 
-      // User wants it at the top, so we should probably wait or load it in.
-      // Let's await parallelly so we show everything at once for a "pop" effect, 
-      // or we could show text first.
-      // Let's await both for simplicity of state management.
       const imagePromise = generateCoverImage(text);
 
       const [content, imageUrl] = await Promise.all([contentPromise, imagePromise]);
@@ -183,37 +198,53 @@ function App() {
     executeGeneration(pendingInput, duration, contentStyle);
   };
 
+  // Helper to render the top controls (Theme + Share)
+  const renderControls = () => (
+     <>
+        {/* Theme Toggle */}
+        <button
+             onClick={toggleTheme}
+             className="flex items-center justify-center w-8 h-8 bg-white/40 dark:bg-slate-800/40 hover:bg-white/80 dark:hover:bg-slate-800/80 backdrop-blur-md border border-white/40 dark:border-slate-700 rounded-full shadow-sm hover:shadow transition-all duration-200"
+             title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+           >
+              {theme === 'light' ? (
+                <Moon className="w-3.5 h-3.5 text-gray-500" />
+              ) : (
+                <Sun className="w-3.5 h-3.5 text-yellow-200" />
+              )}
+           </button>
+
+           {/* Share Button */}
+           <button 
+             onClick={handleSiteShare}
+             className="flex items-center gap-2 px-3 py-1.5 bg-white/40 dark:bg-slate-800/40 hover:bg-white/80 dark:hover:bg-slate-800/80 backdrop-blur-md border border-white/40 dark:border-slate-700 rounded-full shadow-sm hover:shadow transition-all duration-200 group"
+           >
+             <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${isSiteShared ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-slate-400 group-hover:text-gray-800 dark:group-hover:text-slate-200'}`}>
+                {isSiteShared ? 'Link Copied' : 'Share App'}
+             </span>
+             {isSiteShared ? (
+                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+             ) : (
+                <Share className="w-3.5 h-3.5 text-gray-400 dark:text-slate-500 group-hover:text-gray-800 dark:group-hover:text-slate-300 transition-colors" />
+             )}
+           </button>
+     </>
+  );
+
   return (
-    <div className="min-h-screen flex flex-col selection:bg-[#1F2937] selection:text-white overflow-x-hidden relative">
+    <div className="min-h-screen flex flex-col selection:bg-[#1F2937] selection:text-white dark:selection:bg-white dark:selection:text-black overflow-x-hidden relative">
       
       {/* Vignette Overlay defined in global CSS */}
       <div className="fixed inset-0 vignette-overlay pointer-events-none z-0" />
 
-      {/* Website Share Button - Top Right (Homepage Only) */}
+      {/* Desktop Controls: Top Right (Hidden on Mobile) */}
       {!generatedContent && (
-        <div className="absolute top-6 right-6 z-50 animate-in fade-in duration-700">
-           <button 
-             onClick={handleSiteShare}
-             className="flex items-center gap-2 px-3 py-1.5 bg-white/40 hover:bg-white/80 backdrop-blur-md border border-white/40 rounded-full shadow-sm hover:shadow transition-all duration-200 group"
-           >
-             <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${isSiteShared ? 'text-emerald-600' : 'text-gray-500 group-hover:text-gray-800'}`}>
-                {isSiteShared ? 'Link Copied' : 'Share App'}
-             </span>
-             {isSiteShared ? (
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-             ) : (
-                <Share className="w-3.5 h-3.5 text-gray-400 group-hover:text-gray-800 transition-colors" />
-             )}
-           </button>
+        <div className="hidden md:flex absolute top-6 right-6 z-50 items-center gap-3 animate-in fade-in duration-700">
+           {renderControls()}
         </div>
       )}
 
       {/* Main Interface */}
-      {/* 
-          Dynamic max-width: 
-          - max-w-lg (standard narrow) for the Input/Tuner view 
-          - max-w-full (100%) for the Reader view to allow sidebar layout
-      */}
       <main 
         className={`
           flex-grow flex flex-col items-center justify-center relative w-full mx-auto px-4 md:px-6 py-6 z-10 
@@ -236,13 +267,18 @@ function App() {
           <div className="w-full flex flex-col items-center animate-in fade-in zoom-in-95 duration-700 space-y-4">
             
             {/* Header */}
-            <div className="text-center space-y-1 mb-10">
-              <h1 className="text-3xl font-display font-black tracking-tighter text-[#1F2937] uppercase">
+            <div className="text-center space-y-1 mb-6">
+              <h1 className="text-3xl font-display font-black tracking-tighter text-[#1F2937] dark:text-white uppercase">
                 Attention <span className="font-light">Zoomer</span>
               </h1>
-              <p className="text-gray-400 font-bold text-xs tracking-[0.15em] uppercase">
+              <p className="text-gray-400 dark:text-slate-500 font-bold text-xs tracking-[0.15em] uppercase">
                 Decide the cost of your attention
               </p>
+              
+              {/* Mobile Controls: Centered below title (Hidden on Desktop) */}
+              <div className="md:hidden flex items-center justify-center gap-3 pt-4 animate-in fade-in duration-700">
+                  {renderControls()}
+              </div>
             </div>
 
             {/* Error Display */}
@@ -253,7 +289,7 @@ function App() {
             )}
 
             {/* STEP 1: The Knob */}
-            <div className="relative z-20 w-full flex justify-center py-2">
+            <div className="relative z-10 w-full flex justify-center py-2">
               <TimeSelector 
                 seconds={duration} 
                 onChange={(val) => {
@@ -266,14 +302,14 @@ function App() {
             </div>
             
             {/* Dynamic Time Description */}
-            <div className="relative z-10 -mt-2 mb-2 h-6 flex items-center justify-center">
-                <span className="text-sm font-medium text-gray-500 italic animate-in fade-in duration-300 key={duration}">
+            <div className="relative z-0 -mt-2 mb-2 h-6 flex items-center justify-center">
+                <span className="text-sm font-medium text-gray-500 dark:text-slate-400 italic animate-in fade-in duration-300 key={duration}">
                    ~ {getTimeContext(duration)}
                 </span>
             </div>
 
             {/* STEP 2: The Source Text & Action */}
-            <div className="w-full z-10">
+            <div className="w-full relative z-30">
                <ArticleInput 
                   value={inputText} 
                   onChange={(val) => {
@@ -288,7 +324,7 @@ function App() {
                 />
                  {loading && (
                     <div className="mt-6 text-center animate-pulse">
-                        <p className="text-sm font-bold text-[#1F2937] uppercase tracking-widest">
+                        <p className="text-sm font-bold text-[#1F2937] dark:text-slate-200 uppercase tracking-widest">
                             Generating your attention...
                         </p>
                     </div>
@@ -304,26 +340,22 @@ function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop with semi-transparent blur */}
             <div 
-                className="absolute inset-0 bg-slate-200/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-300" 
+                className="absolute inset-0 bg-slate-200/40 dark:bg-slate-900/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-300" 
                 onClick={() => setIsTunerOpen(false)}
             />
             
             {/* Modal Content - Glassmorphism Style */}
-            {/* 
-                User requested transparency to see context behind it.
-                Changed bg-white/80 to bg-white/40 + strong backdrop-blur.
-            */}
-            <div className="relative bg-white/40 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 md:p-12 flex flex-col items-center gap-6 border border-white/50 max-w-md w-full animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+            <div className="relative bg-white/40 dark:bg-slate-800/60 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 md:p-12 flex flex-col items-center gap-6 border border-white/50 dark:border-slate-700 max-w-md w-full animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                 <button 
                     onClick={() => setIsTunerOpen(false)}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 transition-colors"
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
                 >
                     <X className="w-6 h-6" />
                 </button>
 
                 <div className="text-center">
-                    <h2 className="text-xl font-display font-bold text-[#1F2937]">Adjust Attention</h2>
-                    <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Refine time & style</p>
+                    <h2 className="text-xl font-display font-bold text-[#1F2937] dark:text-white">Adjust Attention</h2>
+                    <p className="text-gray-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Refine time & style</p>
                 </div>
 
                 <div className="flex flex-col items-center w-full">
@@ -334,7 +366,7 @@ function App() {
                         disabled={loading}
                     />
                     <div className="mt-4 mb-6 h-6 flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-600 italic">
+                        <span className="text-sm font-medium text-gray-600 dark:text-slate-400 italic">
                         ~ {getTimeContext(duration)}
                         </span>
                     </div>
@@ -348,7 +380,7 @@ function App() {
                 <button 
                     onClick={handleTunerSubmit}
                     disabled={loading}
-                    className="w-full py-4 bg-[#1F2937]/90 text-white rounded-xl font-bold font-display uppercase tracking-wider hover:bg-black hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg backdrop-blur-sm"
+                    className="w-full py-4 bg-[#1F2937]/90 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-bold font-display uppercase tracking-wider hover:bg-black dark:hover:bg-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg backdrop-blur-sm"
                 >
                     {loading ? 'Regenerating...' : 'Update View'}
                 </button>
@@ -359,10 +391,10 @@ function App() {
       {/* Footer Credit - Only show when not reading */}
       {!generatedContent && (
         <div className="w-full text-center py-8 space-y-2 z-10 opacity-60 hover:opacity-100 transition-opacity duration-300">
-             <p className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">
-                Designed by <a href="https://www.linkedin.com/in/senlinbebop" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#1F2937] transition-colors pb-0.5 border-b border-transparent hover:border-[#1F2937]">Sen Lin</a>
+             <p className="text-[10px] text-gray-400 dark:text-slate-600 font-bold tracking-widest uppercase">
+                Designed by <a href="https://www.linkedin.com/in/senlinbebop" target="_blank" rel="noopener noreferrer" className="text-gray-500 dark:text-slate-500 hover:text-[#1F2937] dark:hover:text-slate-300 transition-colors pb-0.5 border-b border-transparent hover:border-[#1F2937] dark:hover:border-slate-300">Sen Lin</a>
              </p>
-             <p className="text-[10px] text-gray-300 font-bold tracking-widest uppercase">
+             <p className="text-[10px] text-gray-300 dark:text-slate-700 font-bold tracking-widest uppercase">
                 Powered by Gemini 2.5
              </p>
         </div>
